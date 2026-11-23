@@ -1,0 +1,97 @@
+<!doctype html>
+<html lang="en-ZA"><head><meta charset="utf-8"><meta name="viewport" content="width=device-width,initial-scale=1"><title>Keystone Admin Demo</title>
+<style>
+*{box-sizing:border-box}body{margin:0;background:#f6f6ef;color:#24352a;font:15px system-ui,sans-serif}h1,h2,h3,p{margin:0}button,select{font:inherit}button,select,a.cta{border:1px solid #cad0c5;background:white;border-radius:7px;padding:9px 13px;color:#24352a;font-weight:650;cursor:pointer}a.cta{text-decoration:none}button:hover,a.cta:hover{border-color:#758575}button:focus-visible,a:focus-visible,select:focus-visible{outline:3px solid #9c731b;outline-offset:3px}header{background:#24392e;color:white;padding:16px 0}.wrap{max-width:1170px;margin:auto;padding:0 24px}.row{display:flex;align-items:center;justify-content:space-between;gap:12px}.brand{font-size:20px;font-weight:800}.hero{background:#263d31;color:white;padding:42px 0}.hero small{color:#ebd980;text-transform:uppercase;letter-spacing:2px;font-weight:700}.hero h1{font-size:clamp(36px,6vw,62px);letter-spacing:-.06em;margin:5px 0}.hero p{color:#e2eadf}.metrics,.twocol{display:grid;grid-template-columns:repeat(4,1fr);gap:12px;margin:22px 0}.twocol{grid-template-columns:1fr 1fr}.panel{background:white;border:1px solid #dce0d5;border-radius:11px;padding:17px}.metrics strong{display:block;font-size:29px}.muted{color:#58665a}.tabs{display:flex;gap:7px;flex-wrap:wrap;margin:0 0 22px}.tabs button[aria-pressed=true],.primary{background:#263d31;color:white}.heading{margin-bottom:14px}.heading p,.panel p{margin-top:6px}.stack{display:grid;gap:10px}.chip{display:inline-block;padding:4px 8px;border-radius:5px;font-size:12px;font-weight:700;background:#e8eee2;margin:4px 4px 4px 0}.actions{display:flex;flex-wrap:wrap;gap:6px;margin-top:10px}.actions label{display:grid;gap:4px}.activity{display:grid;gap:8px;list-style:none;padding:0}.activity li{border-bottom:1px solid #e4e7df;padding-bottom:8px}.section{min-height:370px}footer{padding:20px 0;margin-top:25px;background:#e9ede2}.sr{position:absolute;clip-path:inset(50%)}@media(max-width:650px){.wrap{padding-inline:13px}.metrics{grid-template-columns:1fr 1fr}.twocol{grid-template-columns:1fr}.row.entry{align-items:flex-start;flex-direction:column}.hero{padding:28px 0}}
+</style></head><body>
+<header><div class="wrap row"><span class="brand">◆ Keystone</span><a class="cta" href="./index.html">← Property demo</a></div></header>
+<section class="hero"><div class="wrap"><small>Krugersdorp · Interactive admin demo</small><h1>Marketplace operations</h1><p>Review listings, verify professionals and follow a buyer enquiry through to a viewing.</p></div></section>
+<main class="wrap"><section id="metrics" class="metrics" aria-label="Marketplace totals"></section><nav id="tabs" class="tabs" aria-label="Admin sections"></nav><p id="notice" class="sr" aria-live="polite"></p><section id="screen" class="section" aria-labelledby="screen-title"></section></main>
+<footer><div class="wrap">Fictional records · Actions are simulated in this browser · Dlamini House</div></footer>
+<script>
+const $=id=>document.getElementById(id);
+const esc=x=>String(x??'').replace(/[&<>"']/g,c=>({'&':'&amp;','<':'&lt;','>':'&gt;','"':'&quot;',"'":'&#39;'}[c]));
+const load=(key,value)=>{try{return JSON.parse(localStorage.getItem(key))??value}catch{return value}};
+const save=(key,value)=>{try{localStorage.setItem(key,JSON.stringify(value))}catch{}};
+const leadKey='keystone-client-demo-v1', opsKey='keystone-admin-demo-v2';
+const listingNames=[['The Courtyard House','Featherbrooke Estate'],['A modern family retreat','Noordheuwel'],['The Garden Residence','Monument'],['West Ridge Townhouse','Rangeview'],['The Ridgeview Home','Rant-en-Dal'],['Oak Lane Cottage','Kenmare']];
+const params=new URLSearchParams(location.search);
+const property=listingNames[Number(params.get('sample'))-1];
+const incomingId=params.get('id');
+let leads=load(leadKey,[{id:'sample',title:'The Courtyard House',suburb:'Featherbrooke Estate',status:'New',message:'Is a Saturday viewing available?'}]);
+if(property&&incomingId&&!leads.some(l=>l.id===incomingId)){
+ leads=[{id:incomingId,title:property[0],suburb:property[1],status:'New',message:'I’d like to arrange a weekend viewing.'},...leads];
+ save(leadKey,leads);
+}
+const state=load(opsKey,{
+ listings:[
+ {id:'KP-107',title:'Willow Ridge Family Home',suburb:'Noordheuwel',price:'R 2 795 000',features:['Solar','Borehole'],status:'Pending review',check:'Photos and owner mandate supplied for review.'},
+ {id:'KP-108',title:'Stoneview Estate Townhouse',suburb:'Rangeview',price:'R 1 895 000',features:['Security Estate'],status:'Pending review',check:'Estate access claim awaiting administrative review.'}],
+ professionals:[
+ {id:'KY-021',name:'Naledi Mokoena',office:'West Rand Property Studio',role:'Estate agent',check:'Sample business registration and practitioner certificate',status:'Pending review'},
+ {id:'KY-022',name:'Jordan Jacobs',office:'Ridgeview Transfers',role:'Conveyancer',check:'Sample practice and professional registration details',status:'Pending review'}],
+ queue:[],events:[{label:'Willow Ridge Family Home submitted for review',time:'Sample activity'}]
+});
+const sections=['Overview','Listing review','Verification','Enquiries','Syndication','Activity'];
+let section=incomingId?'Enquiries':'Overview', filter='All statuses';
+const statuses=['New','Contacted','Qualified','Viewing scheduled','Closed'];
+const option=(value,current)=>'<option '+(value===current?'selected':'')+'>'+esc(value)+'</option>';
+const chip=value=>'<span class="chip">'+esc(value)+'</span>';
+const action=(text,task,id='',cls='')=>'<button type="button" class="'+cls+'" data-task="'+task+'" data-id="'+esc(id)+'">'+text+'</button>';
+const heading=(title,body)=>'<div class="heading"><h2 id="screen-title" tabindex="-1">'+title+'</h2><p class="muted">'+body+'</p></div>';
+const panel=(body)=>'<article class="panel">'+body+'</article>';
+const empty=body=>panel('<p class="muted">'+body+'</p>');
+function log(label){
+ state.events.unshift({label,time:new Date().toLocaleString('en-ZA',{timeZone:'Africa/Johannesburg'})});
+ save(opsKey,state);
+ $('notice').textContent=label;
+}
+function activity(items){
+ return '<ul class="activity">'+items.map(e=>'<li>'+esc(e.label)+'<br><small class="muted">'+esc(e.time)+'</small></li>').join('')+'</ul>';
+}
+const views={
+ Overview:()=>heading('Overview','Start with a listing, an application or a buyer enquiry.')+
+ '<div class="twocol">'+panel('<h3>Listing moderation</h3><p>Review structured features such as solar, borehole and estate security before approval.</p><div class="actions">'+action('Review listings','go','Listing review','primary')+'</div>')+
+ panel('<h3>Professional verification</h3><p>Review sample practitioner evidence and see the verification status update.</p><div class="actions">'+action('Review applications','go','Verification')+'</div>')+
+ panel('<h3>Buyer enquiries</h3><p>Follow a sample enquiry from first contact to a scheduled viewing.</p><div class="actions">'+action('Open enquiries','go','Enquiries')+'</div>')+
+ panel('<h3>Recent activity</h3>'+activity(state.events.slice(0,3))+'</div>'),
+ 'Listing review':()=>heading('Listing review','Review incoming owner submissions and their South African property features.')+'<div class="stack">'+state.listings.map(l=>panel('<div class="row entry"><div>'+chip(l.status)+'<h3>'+esc(l.title)+'</h3><p class="muted">'+esc(l.id)+' · '+esc(l.suburb)+' · '+esc(l.price)+'</p><p>'+esc(l.check)+'</p><div>'+l.features.map(chip).join('')+'</div></div><div class="actions">'+(l.status==='Pending review'?action('Approve listing','approve',l.id,'primary')+action('Request changes','revise',l.id):l.status==='Changes requested'?action('Simulate resubmission','resubmit',l.id):'')+'</div></div>')).join('')+'</div>',
+ Verification:()=>heading('Professional verification','Inspect fictional credentials and record an administrative decision.')+'<div class="stack">'+state.professionals.map(p=>panel('<div class="row entry"><div>'+chip(p.status)+'<h3>'+esc(p.name)+'</h3><p class="muted">'+esc(p.office)+' · '+esc(p.role)+'</p><details><summary>Review sample evidence</summary><p>'+esc(p.check)+'</p></details></div><div class="actions">'+(p.status==='Pending review'?action('Mark verified','verify',p.id,'primary')+action('Request evidence','evidence',p.id):p.status==='Evidence requested'?action('Simulate updated evidence','evidence-in',p.id):'')+'</div></div>')).join('')+'</div>',
+ Enquiries:()=>{
+ const visible=leads.filter(l=>filter==='All statuses'||l.status===filter);
+ return heading('Buyer enquiries','Sample enquiries from the property demo appear here. Update the status as you follow up.')+
+ '<label>Status <select id="filter">'+['All statuses',...statuses].map(s=>option(s,filter)).join('')+'</select></label><div class="stack" style="margin-top:12px">'+
+ (visible.length?visible.map(l=>panel('<div class="row entry"><div>'+chip(l.status)+'<h3>'+esc(l.title)+'</h3><p class="muted">'+esc(l.suburb)+' · Sample buyer</p><p>'+esc(l.message)+'</p></div><div class="actions"><label>Enquiry status<select data-lead="'+esc(l.id)+'">'+statuses.map(s=>option(s,l.status)).join('')+'</select></label></div></div>')).join(''):empty('No enquiries match this status.'))+'</div>';
+ },
+ Syndication:()=>heading('PropCon syndication','Approve a listing to see it enter the simulated syndication queue.')+'<div class="stack">'+
+ (state.queue.length?state.queue.map(q=>panel('<div class="row entry"><div>'+chip(q.status)+'<h3>'+esc(q.title)+'</h3><p class="muted">PropCon · '+esc(q.id)+'</p></div>'+(q.status==='Queued'?action('Simulate export','export',q.id,'primary'):'')+'</div>')).join(''):empty('The queue is empty. Approve a sample submission in Listing review.'))+'</div>',
+ Activity:()=>heading('Activity log','Listing decisions, verification, enquiry updates and simulated exports appear here.')+panel(activity(state.events))
+};
+function draw(focus=false){
+ $('metrics').innerHTML=[['Listings to review',state.listings.filter(l=>l.status==='Pending review').length],['Verification pending',state.professionals.filter(p=>p.status==='Pending review').length],['New enquiries',leads.filter(l=>l.status==='New').length],['Queued exports',state.queue.filter(q=>q.status==='Queued').length]].map(([title,n])=>panel('<span class="muted">'+title+'</span><strong>'+n+'</strong>')).join('');
+ $('tabs').innerHTML=sections.map(s=>'<button type="button" data-task="go" data-id="'+s+'" aria-pressed="'+(s===section)+'">'+s+'</button>').join('');
+ $('screen').innerHTML=views[section]();
+ if(focus)$('screen-title').focus();
+}
+document.addEventListener('click',e=>{
+ const button=e.target.closest('[data-task]');if(!button)return;
+ const {task,id}=button.dataset;
+ if(task==='go'){if(sections.includes(id)){section=id;draw(true)}return}
+ const listing=state.listings.find(l=>l.id===id), professional=state.professionals.find(p=>p.id===id), job=state.queue.find(q=>q.id===id);
+ if(task==='approve'&&listing?.status==='Pending review'){
+ listing.status='Approved';state.queue.push({id,title:listing.title,status:'Queued'});log(listing.title+' approved and queued for simulated PropCon syndication');
+ }else if(task==='revise'&&listing){listing.status='Changes requested';log('Listing changes requested for '+listing.title)}
+ else if(task==='resubmit'&&listing){listing.status='Pending review';log(listing.title+' resubmitted')}
+ else if(task==='verify'&&professional){professional.status='Verified';log(professional.name+' verified in demo')}
+ else if(task==='evidence'&&professional){professional.status='Evidence requested';log('Additional evidence requested for '+professional.name)}
+ else if(task==='evidence-in'&&professional){professional.status='Pending review';log('Updated evidence received for '+professional.name)}
+ else if(task==='export'&&job){job.status='Export simulated';log('PropCon export simulated for '+job.title)}
+ draw(true);
+});
+document.addEventListener('change',e=>{
+ if(e.target.id==='filter'){filter=e.target.value;draw();$('filter').focus();return}
+ const l=leads.find(l=>l.id===e.target.dataset.lead);
+ if(l&&statuses.includes(e.target.value)){l.status=e.target.value;save(leadKey,leads);log(l.title+' enquiry moved to '+l.status);draw();[...document.querySelectorAll('[data-lead]')].find(x=>x.dataset.lead===l.id)?.focus()}
+});
+window.addEventListener('storage',e=>{if(e.key===leadKey){leads=load(leadKey,leads);draw()}});
+draw();
+</script></body></html>
